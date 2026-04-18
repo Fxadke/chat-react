@@ -10,7 +10,7 @@ function App() {
   const [wiadomosci, setWiadomosci] = useState([]);
   const [mojNick, setMojNick] = useState(localStorage.getItem('shoutboxNick') || '');
 
-  const bottomRef = useRef(null);
+  const chatRef = useRef(null);
 
   useEffect(() => {
     const pobierzDane = async () => {
@@ -18,7 +18,9 @@ function App() {
         const odpowiedz = await fetch(API_URL);
         const dane = await odpowiedz.json();
         setWiadomosci(dane);
-      } catch (error) { console.error(error); }
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     pobierzDane();
@@ -26,9 +28,14 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ AUTO SCROLL
+  // ✅ AUTO SCROLL (PEWNA WERSJA)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    requestAnimationFrame(() => {
+      const el = chatRef.current;
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
   }, [wiadomosci]);
 
   const handleDodajWiadomosc = async (nowyTekst) => {
@@ -38,7 +45,9 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ author: mojNick, text: nowyTekst })
       });
-    } catch (error) { console.error(error); }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   if (!mojNick) {
@@ -54,7 +63,7 @@ function App() {
     <div className="app-container">
       <Header />
 
-      <div className="chat-window">
+      <div className="chat-window" ref={chatRef}>
         {wiadomosci.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#999' }}>
             Ładowanie wiadomości...
@@ -64,9 +73,6 @@ function App() {
             <Message key={msg.id} msg={msg} />
           ))
         )}
-
-        {/* 👇 AUTO SCROLL ELEMENT */}
-        <div ref={bottomRef} />
       </div>
 
       <MessageForm onWyslij={handleDodajWiadomosc} />
